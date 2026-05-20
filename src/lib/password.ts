@@ -1,9 +1,9 @@
 // PBKDF2-SHA256 password hashing for the single admin user.
 // Format: pbkdf2$<iterations>$<base64-salt>$<base64-hash>
-// 200000 iterations, 16 byte salt, 32 byte hash.
+// 100000 iterations (Cloudflare Workers PBKDF2 hard cap), 16 byte salt, 32 byte hash.
 
 const enc = new TextEncoder();
-const ITERATIONS = 200_000;
+const ITERATIONS = 100_000;
 const SALT_LEN = 16;
 const HASH_LEN = 32;
 

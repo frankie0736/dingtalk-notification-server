@@ -27,7 +27,7 @@ if (!existsSync(PROD_VARS_PATH)) {
   process.exit(1);
 }
 
-console.log('→ hashing password (PBKDF2-SHA256, 200000 iterations)...');
+console.log('→ hashing password (PBKDF2-SHA256)...');
 const hash = await hashPassword(pw);
 
 console.log(`→ updating ${PROD_VARS_PATH}`);
