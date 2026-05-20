@@ -33,7 +33,6 @@ notify.post('/notify', bearerAuth, async (c) => {
   const request_id = c.get('request_id');
   const robot = c.get('robot');
   if (!robot) {
-    // bearerAuth guarantees this, but type system needs the check.
     return c.json({ ok: false, error: 'invalid_token' }, 401);
   }
 

@@ -6,9 +6,9 @@ export function openApiSpec(baseUrl: string): Record<string, unknown> {
     openapi: '3.1.0',
     info: {
       title: 'DingTalk Notification Server',
-      version: '0.1.0',
+      version: '0.2.0',
       summary:
-        'Send DingTalk group webhook messages (text or markdown) with @mobile mentions through a single auditable HTTP endpoint.',
+        'Send DingTalk group webhook notifications (text with reliable @-push, or markdown for rich content) through a single auditable HTTP endpoint.',
       description: [
         '## Overview',
         '',
@@ -21,6 +21,26 @@ export function openApiSpec(baseUrl: string): Record<string, unknown> {
         '4. Posts the assembled body to `https://oapi.dingtalk.com/robot/send`.',
         '5. Writes an audit log (request, response, latency) and returns the DingTalk response verbatim.',
         '',
+        '## Message types',
+        '',
+        'Two `type` values are supported:',
+        '',
+        '- **`text`** — plain text. `at_mobiles` triggers a **real DingTalk @-push** (blue badge + device alert) for each phone number, provided the number belongs to a group member.',
+        '- **`markdown`** — rich content (lists, links, bold, blockquotes, code spans). `at_mobiles` does NOT trigger a push notification — DingTalk only substitutes `@<mobile>` in the rendered body with the recipient\'s display name. This is a platform limitation, not a server bug.',
+        '',
+        '## Recommended pattern for "@ someone with rich detail"',
+        '',
+        'If you need both reliable @-push AND rich formatting, send two requests:',
+        '',
+        '1. First a `text` message with a short summary and `at_mobiles` — this delivers the actual notification.',
+        '2. Then a `markdown` message carrying the full details. No `at_mobiles` needed.',
+        '',
+        'Example:',
+        '```',
+        'POST /api/v1/notify  {"type":"text","content":"🔔 Build #123 failed — see details","at_mobiles":["13800138000"]}',
+        'POST /api/v1/notify  {"type":"markdown","title":"Build #123","content":"### main 失败\\n- env: prod\\n- [logs](...)"}',
+        '```',
+        '',
         '## Authentication',
         '',
         'All `/api/v1/*` endpoints require `Authorization: Bearer <token>`. The token format is `dnk_` followed by 32 base32 characters. Tokens are created in the admin UI and shown only once.',
@@ -28,12 +48,6 @@ export function openApiSpec(baseUrl: string): Record<string, unknown> {
         '## Error handling',
         '',
         'Errors are passed through. HTTP 200 with `ok: false` means DingTalk rejected the message (e.g. bad keyword, signature mismatch, rate limit) — read `dingtalk.errcode` and `dingtalk.errmsg`. HTTP 4xx means the request itself was malformed or unauthenticated.',
-        '',
-        '## At-mention behavior',
-        '',
-        '- For `type: "text"`, the server passes `at.atMobiles` to DingTalk; recipients receive a normal @mention.',
-        '- For `type: "markdown"`, DingTalk requires `@<mobile>` to appear literally inside the markdown body. The server automatically appends `@<mobile>` tokens to the end of `content` for each entry in `at_mobiles`.',
-        '- `at_all: true` and a non-empty `at_mobiles` array are mutually exclusive.',
       ].join('\n'),
       contact: { name: 'API support' },
       license: { name: 'MIT' },
@@ -53,27 +67,27 @@ export function openApiSpec(baseUrl: string): Record<string, unknown> {
               'application/json': {
                 schema: { $ref: '#/components/schemas/NotifyRequest' },
                 examples: {
-                  text: {
-                    summary: 'Plain text with @mention',
+                  text_at: {
+                    summary: 'Text — triggers a real @-push',
                     value: {
                       type: 'text',
                       content: 'Build #123 failed on main',
                       at_mobiles: ['13800138000'],
                     },
                   },
-                  markdown: {
-                    summary: 'Markdown with title and @mention',
+                  text_at_all: {
+                    summary: 'Text — broadcast to everyone',
+                    value: { type: 'text', content: 'Server down', at_all: true },
+                  },
+                  markdown_detail: {
+                    summary:
+                      'Markdown — rich detail card. Use after a text @ if you also need a push.',
                     value: {
                       type: 'markdown',
                       title: 'Build Failed',
                       content:
-                        '### main branch build failed\n\n[View logs](https://example.com/logs)',
-                      at_mobiles: ['13800138000', '13900139000'],
+                        '### main branch build failed\n\n- env: production\n- elapsed: 42s\n- [View logs](https://example.com)',
                     },
-                  },
-                  at_all: {
-                    summary: 'Broadcast to everyone in group',
-                    value: { type: 'text', content: 'Server down', at_all: true },
                   },
                 },
               },
@@ -185,13 +199,15 @@ export function openApiSpec(baseUrl: string): Record<string, unknown> {
               type: 'string',
               minLength: 1,
               maxLength: 20000,
-              description: 'Plain text content. Must include any keyword required by the robot security policy.',
+              description:
+                'Plain text content. Must include any keyword required by the robot security policy.',
             },
             at_mobiles: {
               type: 'array',
               items: { type: 'string', pattern: '^\\+?\\d{6,20}$' },
               maxItems: 50,
-              description: 'Phone numbers to @mention. Mutually exclusive with at_all=true.',
+              description:
+                'Phone numbers to @mention. **Triggers a real DingTalk @-push** in text mode. Each number must belong to a member of the target group — DingTalk silently desensitizes non-member numbers. Mutually exclusive with at_all=true.',
             },
             at_all: {
               type: 'boolean',
@@ -216,16 +232,20 @@ export function openApiSpec(baseUrl: string): Record<string, unknown> {
               minLength: 1,
               maxLength: 20000,
               description:
-                'Markdown body. The server auto-appends `@<mobile>` tokens to the end for each entry in at_mobiles so the mention actually renders.',
+                'Markdown body. Lists, bold, links, code spans, blockquotes are supported. The server auto-appends `@<mobile> ` tokens (with trailing space) for each entry in at_mobiles so DingTalk substitutes the display name in the rendered card.',
             },
             at_mobiles: {
               type: 'array',
               items: { type: 'string', pattern: '^\\+?\\d{6,20}$' },
               maxItems: 50,
+              description:
+                '**Does NOT trigger a push notification in markdown mode** — DingTalk platform limitation. Listed numbers only render as the recipient\'s display name inside the card. For a real @-push, send a separate text message first.',
             },
             at_all: {
               type: 'boolean',
               default: false,
+              description:
+                'Even with at_all=true, markdown mode will not produce a real broadcast push. Use type=text for actual broadcast.',
             },
           },
         },

@@ -32,6 +32,31 @@ curl -X POST https://your-worker.workers.dev/api/v1/notify \
   -d '{"type":"text","content":"hello","at_mobiles":["13800138000"]}'
 ```
 
+### Message types and @-mention behavior
+
+DingTalk treats `text` and `markdown` differently:
+
+| Mode | Rich formatting | `at_mobiles` triggers push? |
+| --- | --- | --- |
+| `text` | No | **Yes** — real blue-badge @ + device notification |
+| `markdown` | Yes (lists, links, bold, blockquote, code) | **No** — recipient name renders in the card but no push fires |
+
+This asymmetry is a DingTalk platform limitation, not a server choice.
+
+### Recommended pattern: text + markdown combo
+
+When you need both a reliable @-push **and** rich content, send two requests:
+
+```bash
+# 1. Short text with @ — this is the actual notification
+curl -X POST .../api/v1/notify -H "Authorization: Bearer dnk_..." \
+  -d '{"type":"text","content":"🔔 Build #123 failed — see detail","at_mobiles":["13800138000"]}'
+
+# 2. Markdown card with the full detail (no at_mobiles needed)
+curl -X POST .../api/v1/notify -H "Authorization: Bearer dnk_..." \
+  -d '{"type":"markdown","title":"Build #123","content":"### main 失败\n- env: prod\n- [logs](https://example.com)"}'
+```
+
 Response (success):
 
 ```json

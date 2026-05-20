@@ -73,6 +73,10 @@ export async function send(
 }
 
 // Build the body DingTalk expects from our normalized API shape.
+//
+// Important: only `text` triggers a real @-mention push notification (blue badge +
+// device alert). `markdown` will show the recipient's name inline but does NOT
+// deliver a push — see the README for the recommended two-step pattern.
 export function buildDingTalkBody(input: {
   type: 'text' | 'markdown';
   content: string;
@@ -93,10 +97,13 @@ export function buildDingTalkBody(input: {
     };
   }
 
-  // markdown: DingTalk requires `@mobile` literals to appear in the body for @ to render.
+  // markdown: DingTalk requires `@<mobile>` literals in the body so it can
+  // substitute the recipient's display name. This is purely visual — it does
+  // NOT trigger a push notification. Trailing space matters for the substitution
+  // to fire at all.
   const trailingMentions =
     input.at_mobiles && input.at_mobiles.length > 0
-      ? '\n\n' + input.at_mobiles.map((m) => `@${m}`).join(' ')
+      ? '\n\n' + input.at_mobiles.map((m) => `@${m} `).join('')
       : '';
 
   return {
