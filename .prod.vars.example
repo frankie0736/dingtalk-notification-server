@@ -1,0 +1,20 @@
+# Production secrets — committed as a template only. Copy to .prod.vars
+# and fill in real values. .prod.vars is gitignored.
+#
+# Generate values:
+#   MASTER_KEY:       openssl rand -base64 32
+#   SESSION_SECRET:   openssl rand -base64 32
+#   ADMIN_PASS_HASH:  bun run hash-password 'yourpassword'
+#
+# Apply to live Worker:
+#   bun run secrets:push
+
+# Cloudflare account that hosts the live Worker.
+# `wrangler whoami` lists your accounts; pick the one whose Worker you want to update.
+CLOUDFLARE_ACCOUNT_ID="REPLACE_WITH_YOUR_CF_ACCOUNT_ID"
+
+# Worker secrets — these are pushed via `wrangler secret put`.
+MASTER_KEY="REPLACE_WITH_BASE64_32_BYTES"
+SESSION_SECRET="REPLACE_WITH_BASE64_32_BYTES"
+ADMIN_USER="admin"
+ADMIN_PASS_HASH="REPLACE_WITH_PBKDF2_HASH"

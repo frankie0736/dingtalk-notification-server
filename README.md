@@ -120,11 +120,27 @@ cp .dev.vars.example .dev.vars
 
 #### For production
 
+Production values live in `.prod.vars` (gitignored). Copy the template and fill it in:
+
 ```bash
-bunx wrangler secret put MASTER_KEY
-bunx wrangler secret put SESSION_SECRET
-bunx wrangler secret put ADMIN_USER
-bunx wrangler secret put ADMIN_PASS_HASH
+cp .prod.vars.example .prod.vars
+# Edit .prod.vars:
+#   CLOUDFLARE_ACCOUNT_ID — `wrangler whoami` lists yours
+#   MASTER_KEY, SESSION_SECRET — output of `openssl rand -base64 32`
+#   ADMIN_USER             — your admin username
+#   ADMIN_PASS_HASH        — output of `bun run hash-password '<password>'`
+
+# Push all secrets to the live Worker in one shot:
+bun run secrets:push
+```
+
+Changes apply to the live Worker immediately — no redeploy needed.
+
+**Rotate admin password (one command):**
+
+```bash
+bun run rotate-admin-password '<new-password>'
+# → hashes, writes ADMIN_PASS_HASH to .prod.vars, pushes the secret
 ```
 
 > **WARNING:** Rotating `MASTER_KEY` invalidates every stored webhook URL and signing secret. Plan accordingly — keep the old key around, or re-create the robots after rotating.

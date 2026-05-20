@@ -12,6 +12,8 @@
     "db:migrate:local": "wrangler d1 migrations apply dingtalk-notify --local",
     "db:migrate:remote": "wrangler d1 migrations apply dingtalk-notify --remote",
     "hash-password": "bun scripts/hash-password.ts",
+    "secrets:push": "bun scripts/push-secrets.ts",
+    "rotate-admin-password": "bun scripts/rotate-admin-password.ts",
     "tail": "wrangler tail"
   },
   "dependencies": {
