@@ -1,0 +1,10 @@
+# Copy to .dev.vars for local development. Do NOT commit .dev.vars.
+# Generate values:
+#   MASTER_KEY=$(openssl rand -base64 32)
+#   SESSION_SECRET=$(openssl rand -base64 32)
+#   ADMIN_PASS_HASH=$(bun run hash-password 'yourpassword')
+
+MASTER_KEY="REPLACE_WITH_BASE64_32_BYTES"
+SESSION_SECRET="REPLACE_WITH_BASE64_32_BYTES"
+ADMIN_USER="admin"
+ADMIN_PASS_HASH="REPLACE_WITH_PBKDF2_HASH"

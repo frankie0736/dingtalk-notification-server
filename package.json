@@ -1,0 +1,25 @@
+{
+  "name": "dingtalk-notification-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.2.17",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "tsc --noEmit",
+    "cf-typegen": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply dingtalk-notify --local",
+    "db:migrate:remote": "wrangler d1 migrations apply dingtalk-notify --remote",
+    "hash-password": "bun scripts/hash-password.ts",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "hono": "^4.7.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "wrangler": "^4.79.0"
+  }
+}

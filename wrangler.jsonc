@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "dingtalk-notify",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-17",
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dingtalk-notify",
+      "database_id": "REPLACE_AFTER_CREATE",
+      "preview_database_id": "dingtalk-notify-local",
+      "migrations_dir": "migrations"
+    }
+  ]
+  // Secrets to set via `wrangler secret put`:
+  //   MASTER_KEY         (base64 of 32 random bytes; openssl rand -base64 32)
+  //   SESSION_SECRET     (base64 of 32 random bytes)
+  //   ADMIN_USER         (admin username)
+  //   ADMIN_PASS_HASH    (PBKDF2 hash; run `bun run hash-password 'yourpassword'`)
+}
