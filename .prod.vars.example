@@ -4,7 +4,7 @@
 # Generate values:
 #   MASTER_KEY:       openssl rand -base64 32
 #   SESSION_SECRET:   openssl rand -base64 32
-#   ADMIN_PASS_HASH:  bun run hash-password 'yourpassword'
+#   ADMIN_PASS_HASH:  bun --silent run hash-password 'yourpassword'
 #
 # Apply to live Worker:
 #   bun run secrets:push

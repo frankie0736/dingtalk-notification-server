@@ -108,7 +108,7 @@ Generate values:
 ```bash
 openssl rand -base64 32      # MASTER_KEY
 openssl rand -base64 32      # SESSION_SECRET
-bun run hash-password 'your-admin-password'   # ADMIN_PASS_HASH
+bun --silent run hash-password 'your-admin-password'   # ADMIN_PASS_HASH
 ```
 
 #### For local dev (`.dev.vars`)
@@ -139,8 +139,12 @@ Changes apply to the live Worker immediately — no redeploy needed.
 **Rotate admin password (one command):**
 
 ```bash
-bun run rotate-admin-password '<new-password>'
+bun --silent run rotate-admin-password '<new-password>'
 # → hashes, writes ADMIN_PASS_HASH to .prod.vars, pushes the secret
+#
+# IMPORTANT: use `bun --silent run`, NOT `bun run`. Without --silent,
+# Bun echoes the script command including the plaintext password to
+# stdout — leaking it into your terminal scrollback.
 ```
 
 > **WARNING:** Rotating `MASTER_KEY` invalidates every stored webhook URL and signing secret. Plan accordingly — keep the old key around, or re-create the robots after rotating.

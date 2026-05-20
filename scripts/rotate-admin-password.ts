@@ -4,7 +4,9 @@
 //   2. rewrite ADMIN_PASS_HASH in .prod.vars
 //   3. push the updated secret to Cloudflare
 //
-// Usage: bun run rotate-admin-password '<new-password>'
+// Usage: bun --silent run rotate-admin-password '<new-password>'
+//   (The --silent flag is critical — without it `bun run` echoes the
+//    script command including the password to stdout.)
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -14,7 +16,7 @@ const PROD_VARS_PATH = '.prod.vars';
 
 const pw = process.argv[2];
 if (!pw) {
-  console.error('Usage: bun run rotate-admin-password <new-password>');
+  console.error('Usage: bun --silent run rotate-admin-password <new-password>');
   process.exit(1);
 }
 if (pw.length < 8) {
@@ -44,7 +46,9 @@ if (updated === original) {
 }
 
 console.log('→ pushing ADMIN_PASS_HASH to Cloudflare\n');
-const r = spawnSync('bun', ['run', 'secrets:push'], {
+// Direct script call (not `bun run …`) so the secret never appears in any
+// Bun lifecycle-script echo line.
+const r = spawnSync('bun', ['scripts/push-secrets.ts'], {
   stdio: 'inherit',
 });
 process.exit(r.status ?? 1);
